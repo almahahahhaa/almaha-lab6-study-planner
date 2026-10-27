@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Almaha's Study Planner</title><link rel="stylesheet" href="{{ url_for('style') }}"></head>
+<body>
+<header><a class="brand" href="/">A<span>Almaha's Study Planner</span></a><span class="course">CCEN 448 · Lab 6</span></header>
+<main>
+{% with messages = get_flashed_messages() %}{% for message in messages %}<p class="notice" role="status">{{ message }}</p>{% endfor %}{% endwith %}
+{% if mode in ['login','register'] %}
+<section class="welcome"><div><p class="eyebrow">A LITTLE STRUCTURE, MORE FOCUS</p><h1>Your semester.<br>One task at a time.</h1><p class="intro">Keep your courses, deadlines and next steps together in your own study planner.</p><p class="signature">Created for Almaha Rashed Alshamsi · 100062540</p></div>
+<div class="card"><p class="eyebrow">YOUR PERSONAL WORKSPACE</p><h2>{{ 'Create an account' if mode == 'register' else 'Welcome back' }}</h2>
+<p>{{ 'Save your study tasks and pick up where you left off.' if mode == 'register' else 'Sign in to view your saved study tasks.' }}</p>
+<form method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label for="username">Username</label><input id="username" name="username" required minlength="3" maxlength="40" pattern="[A-Za-z0-9_]+" autocomplete="username">
+<label for="password">Password</label><input id="password" type="password" name="password" required maxlength="128" {% if mode == 'register' %}minlength="10" autocomplete="new-password"{% else %}autocomplete="current-password"{% endif %}>
+{% if mode == 'register' %}<small>Use at least 10 characters. Choose a password just for this lab.</small>{% endif %}
+<button class="primary" type="submit">{{ 'Create account' if mode == 'register' else 'Sign in' }}</button></form>
+<p class="switch">{% if mode == 'register' %}Already registered? <a href="/login">Sign in</a>{% else %}New here? <a href="/register">Create an account</a>{% endif %}</p></div></section>
+{% else %}
+<div class="heading"><div><p class="eyebrow">YOUR STUDY WORKSPACE</p><h1>Hello, {{ g.user.username }}.</h1><p>Make room for what matters. Plan your next step.</p></div>
+<form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Sign out</button></form></div>
+<div class="stats"><div><strong>{{ total }}</strong><span>Total tasks</span></div><div><strong>{{ total-done }}</strong><span>Still to do</span></div><div><strong>{{ done }}</strong><span>Completed</span></div></div>
+<div class="workspace"><section class="card"><h2>Add a study task</h2><form method="post" action="/tasks"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label for="title">What do you need to do?</label><input id="title" name="title" maxlength="160" placeholder="Finish my cloud lab report" required>
+<label for="course">Course</label><input id="course" name="course" maxlength="60" placeholder="CCEN 448">
+<label for="due_date">Due date</label><input id="due_date" type="date" name="due_date"><button type="submit" class="primary">Save task</button></form></section>
+<section class="card tasks"><h2>My saved tasks</h2><p>Only tasks belonging to your account appear here.</p>
+{% for task in tasks %}<article class="task {{ 'complete' if task.completed else '' }}"><span class="status">{{ 'COMPLETED' if task.completed else 'TO DO' }}</span><h3>{{ task.title }}</h3><p>{{ task.course or 'Personal study' }} · {{ task.due_date or 'No due date' }}</p>
+<div class="actions"><form method="post" action="{{ url_for('change_task',task_id=task.id,action='toggle') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>{{ 'Mark to do' if task.completed else 'Mark complete' }}</button></form>
+<form method="post" action="{{ url_for('change_task',task_id=task.id,action='delete') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="delete">Delete</button></form></div></article>
+{% else %}<div class="empty">A fresh start.<p>Add your first task using the form.</p></div>{% endfor %}</section></div>
+{% endif %}
+</main><footer><span>Almaha's Study Planner · Created with AI assistance</span><span class="server">Served by: <strong>{{ server_name }}</strong></span></footer>
+</body></html>
